@@ -2,15 +2,29 @@
 
     var stage;
     var images;
+    var highlight;
 
     function init(){
         document.querySelector('#files').addEventListener('change', fileSelectedHandler, false);
+        document.querySelector('#download').addEventListener('click', downloadSpriteHandler, false);
         stage = new Stage(800, 600, "#canvas");
-        stage.addChild(new FPS());
+    }
+
+    function downloadSpriteHandler(e){
+        e.preventDefault();
+        highlight.hide();
+
+        setTimeout(function(){
+            var link = document.createElement('a');
+            link.download = 'spritecheat.png';
+            link.setAttribute("href", stage.domElement.toDataURL("image/png")
+                .replace("image/png", "image/octet-stream"));
+            link.click();
+        }, 150);
+
     }
 
     function fileSelectedHandler(e){
-        images = [];
         var files = e.currentTarget.files;
 
         var ul = e.currentTarget.parentNode.querySelector('ul');
@@ -18,6 +32,11 @@
         var max = files.length;
         var loaded = 0;
 
+        if(!max){
+            return;
+        }
+
+        images = [];
         files.forEach(function(pFile, pIndex){
 
             var li = document.createElement('li');
@@ -43,15 +62,20 @@
     }
 
     function liClickedHandler(e){
-        e.currentTarget.parentNode.querySelectorAll('.selected').forEach(function(pItem){pItem.classList.remove('selected');});
+        e.currentTarget.parentNode.querySelectorAll('.selected').forEach(function(pItem){if(e.currentTarget===pItem){return;}pItem.classList.remove('selected');});
         e.currentTarget.classList.toggle('selected');
         var idx = Number(e.currentTarget.getAttribute("data-index"));
         for(var i = 0, max = images.length; i<max; i++){
             var el = images[i];
             if(i===idx){
-                el.select();
-            }else{
-                el.unselect();
+                var info = "";
+                if(e.currentTarget.classList.contains('selected')){
+                    highlight.show(el);
+                    info = '<p>width:'+el.image.width+'px;height:'+el.image.height+'px;</p><p>background-position:-'+(el.x+2)+'px -'+(el.y+2)+'px;</p>';
+                }else{
+                    highlight.hide();
+                }
+                document.querySelector('#side .infos div').innerHTML = info;
             }
         }
     }
@@ -62,15 +86,15 @@
         var current = 0;
         var max = imgs.length;
 
-        var x = 0;
-        var y = 0;
+        var x = 1;
+        var y = 1;
 
         var maxHeight = 0;
 
         function next(pLoaded){
             if(pLoaded){
                 if(pLoaded.x + pLoaded.dimensions.width > 800){
-                    pLoaded.x = 0;
+                    pLoaded.x = 1;
                     pLoaded.y += maxHeight;
                     maxHeight = 0;
                     y = pLoaded.y;
@@ -81,7 +105,8 @@
                 }
             }
             if(current===max){
-                console.log("All loaded");
+                highlight = new Highlight();
+                stage.addChild(highlight);
                 return;
             }
             var element = new SpriteElement(imgs[current++].getAttribute("src"), next);
@@ -92,6 +117,23 @@
         }
         next();
     }
+
+    function Highlight(){
+        this.reset();
+    }
+
+    Class.define(Highlight, [Sprite], {
+        show:function(el){
+            this.x = el.x;
+            this.y = el.y;
+            this.clear();
+            this.setLineStyle(2, "rgb(255, 255, 0)");
+            this.drawRect(0, 0, el.image.width+4, el.image.height+4);
+        },
+        hide:function(){
+            this.clear();
+        }
+    });
 
     function SpriteElement(pSrc, pOnLoaded){
         this.selected = false;
@@ -112,21 +154,9 @@
         },
         _draw:function(){
             this.clear();
-            this.setLineStyle(2, this.selected?"rgb(255, 255, 0)":"rgb(255, 0, 0)");
+            this.setLineStyle(2, "rgb(255, 0, 0)");
             this.drawImage(this.image, new Rectangle(0, 0, this.image.width, this.image.height), new Rectangle(2, 2, this.image.width, this.image.height));
             this.drawRect(0, 0, this.image.width+4, this.image.height+4);
-        },
-        select:function(){
-            var p = this.parent;
-            p.removeChild(this);
-            p.addChild(this);
-            this.selected = true;
-            this._draw();
-            document.querySelector('#side .infos div').innerHTML = '<p>background-size:'+this.image.width+'px '+this.image.height+'px;</p><p>background-position:-'+(this.x+2)+'px -'+(this.y+2)+'px</p>';
-        },
-        unselect:function(){
-            this.selected = false;
-            this._draw();
         }
     });
 
