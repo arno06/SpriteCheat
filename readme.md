@@ -3,7 +3,11 @@ SpriteCheat
 
 CSS sprite generator
 
-todo
+Dependencies
+---
+
+
+Todo
 ---
  * [ ] Meilleur organisation des images
  * [ ] Drag & drop des images

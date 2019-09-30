@@ -2,7 +2,7 @@
     <head>
         <title>SpriteCheat - CSS Sprite generator</title>
         <link href="assets/style.css" rel="stylesheet">
-        <script src="//dependencies.arnaud-nicolas.fr/?need=Stage"></script>
+        <script src="//dependencies.arnaud-nicolas.fr/?need=Stage,M4Tween"></script>
         <script src="app/main.js"></script>
     </head>
     <body>
@@ -10,6 +10,11 @@
             <div id="out"></div>
         </div>
         <div id="side">
+            <div class="actions">
+                <button id="file_selector">Charger</button>
+                <button id="download">Enregistrer</button>
+                <input type="file" multiple="multiple" id="files" accept="image/*" style="display:none">
+            </div>
             <div class="infos">
                 <h3>Informations</h3>
                 <div></div>
@@ -17,11 +22,9 @@
             <div class="images">
                 <h3>Images</h3>
                 <div>
-                    <input type="file" multiple="multiple" id="files" accept="image/*">
                     <ul></ul>
                 </div>
             </div>
-            <a href="" id="download">T&eacute;l&eacute;charger</a>
         </div>
     </body>
 </html>

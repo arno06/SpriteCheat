@@ -7,6 +7,9 @@
     function init(){
         document.querySelector('#files').addEventListener('change', fileSelectedHandler, false);
         document.querySelector('#download').addEventListener('click', downloadSpriteHandler, false);
+        document.querySelector('#file_selector').addEventListener('click', function(e){
+            document.querySelector('#files').click();
+        }, false);
         stage = new Stage(800, 600, "#canvas");
     }
 
@@ -27,37 +30,31 @@
     function fileSelectedHandler(e){
         var files = e.currentTarget.files;
 
-        var ul = e.currentTarget.parentNode.querySelector('ul');
+        var ul = document.querySelector('.images ul');
 
-        var max = files.length;
-        var loaded = 0;
-
-        if(!max){
+        if(!files.length){
             return;
         }
 
-        images = [];
-        files.forEach(function(pFile, pIndex){
+        parseAndReadImages(files).then(function(pImages){
+            pImages.forEach(function(pImage, pIndex){
 
-            var li = document.createElement('li');
-            li.addEventListener('click', liClickedHandler, false);
-            var preview = document.createElement('img');
-            var span = document.createElement('span');
-            li.setAttribute("data-index", pIndex);
-            li.appendChild(span);
+                let li = document.createElement('li');
+                li.addEventListener('click', liClickedHandler, false);
+                let preview = document.createElement('img');
+                let span = document.createElement('span');
+                li.setAttribute("data-index", pIndex);
+                li.appendChild(span);
 
-            span.appendChild(preview);
-            li.appendChild(document.createTextNode(pFile.name));
-            ul.appendChild(li);
-            var reader = new FileReader();
-            reader.onload = function(e){
-                preview.src = e.target.result;
-                loaded ++;
-                if(loaded === max){
-                    render();
-                }
-            };
-            reader.readAsDataURL(pFile);
+                span.appendChild(preview);
+                preview.src = pImage.dataUrl;
+                li.appendChild(document.createTextNode(pImage.name));
+                ul.appendChild(li);
+            });
+            console.log("ok");
+            render();
+        }, function(){
+            console.log("nop");
         });
     }
 
@@ -71,7 +68,7 @@
                 var info = "";
                 if(e.currentTarget.classList.contains('selected')){
                     highlight.show(el);
-                    info = '<p>width:'+el.image.width+'px;height:'+el.image.height+'px;</p><p>background-position:-'+(el.x+2)+'px -'+(el.y+2)+'px;</p>';
+                    info = '<p>width:'+el.image.width+'px;</p><p>height:'+el.image.height+'px;</p><p>background-position:-'+(el.x+2)+'px -'+(el.y+2)+'px;</p>';
                 }else{
                     highlight.hide();
                 }
@@ -80,7 +77,96 @@
         }
     }
 
+    function parseAndReadImages(pFiles){
+        return new Promise(function(pResolve, pReject){
+            let max = pFiles.length;
+            if(max>1){
+                let loaded = 0;
+                let images = [];
+                pFiles.forEach(function(pFile, pIndex){
+                    let reader = new FileReader();
+                    reader.onload = function(e){
+                        images.push({name:pFile.name, dataUrl:e.target.result});
+                        loaded ++;
+                        if(loaded === max){
+                            pResolve(images);
+                        }
+                    };
+                    reader.readAsDataURL(pFile);
+                });
+            }else{
+
+                let fileReader = new FileReader();
+                fileReader.onload = function(e){
+                    let i = new Image();
+                    i.onload = function(e){
+                        let s = new Stage(i.width, i.height, "#canvas");
+                        s.drawImage(i,  new Rectangle(0, 0, i.width, i.height), new Rectangle(0, 0, i.width, i.height));
+                        s.addEventListener(Event.DRAWN, function(){
+                            s.removeAllEventListener();
+                            s.pause();
+                            let p1 = s.getPixel(0, 0);
+                            let p2 = s.getPixel(1, 1);
+                            if(p1.r === 255 && p1.g === 0 && p1.b === 0 && p1.alpha === 255){
+                                let x = 2;
+                                let y = 2;
+
+                                let imgs = [];
+                                while(x<s.width){
+                                    let h;
+                                    let w;
+                                    for(let i = x;i<s.width; i++){
+                                        let p = s.getPixel(i, 2);
+                                        if(p.r === 255 && p.g === 0 && p.b === 0 && p.alpha === 255){
+                                            w = i-x;
+                                            break;
+                                        }
+                                    }
+                                    if(w === undefined ){
+                                        x = s.width;
+                                        break;
+                                    }
+                                    for(let k = y; k<s.height; k++){
+                                        let p = s.getPixel(x+w-1, k);
+                                        if(p.r === 255 && p.g === 0 && p.b === 0 && p.alpha === 255){
+                                            h = k - y+1;
+                                            break;
+                                        }
+                                    }
+
+                                    if(h === undefined){
+                                        x = s.width;
+                                        break;
+                                    }
+
+                                    let c = document.createElement("canvas");
+                                    c.width = w;
+                                    c.height = h;
+                                    let ctx = c.getContext('2d');
+                                    console.log(x, y, w, h);
+                                    ctx.drawImage(i, 0, 0, w, h, -x, -y, w, h);
+                                    imgs.push({name:"Image "+(imgs.length+1), dataUrl:c.toDataURL()});
+                                    document.querySelector("#out").appendChild(c);
+                                    x += w+4;
+                                    y = 2;
+                                }
+
+                                pResolve(imgs);
+
+                            }else{
+                                pReject();
+                            }
+                        });
+                    };
+                    i.setAttribute("src", e.currentTarget.result);
+                };
+                fileReader.readAsDataURL(pFiles[0]);
+            }
+        });
+    }
+
     function render(){
+        images = [];
         stage.removeChildren();
         var imgs = document.querySelectorAll('.images ul li img');
         var current = 0;
@@ -120,15 +206,21 @@
 
     function Highlight(){
         this.reset();
+        this._width = 0;
+        this._height = 0;
     }
 
     Class.define(Highlight, [Sprite], {
-        show:function(el){
-            this.x = el.x;
-            this.y = el.y;
+        _draw:function(){
             this.clear();
             this.setLineStyle(2, "rgb(255, 255, 0)");
-            this.drawRect(0, 0, el.image.width+4, el.image.height+4);
+            this.drawRect(0, 0, this._width, this._height);
+        },
+        show:function(el){
+            M4Tween.killTweensOf(this);
+            M4Tween.to(this, .2, {useStyle:false, x:el.x, y:el.y, _width:el.image.width+4, _height:el.image.height+4}).onUpdate(
+                this._draw.proxy(this)
+            ).onComplete(this._draw.proxy(this));
         },
         hide:function(){
             this.clear();
