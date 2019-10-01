@@ -112,48 +112,55 @@
                                 let y = 2;
 
                                 let imgs = [];
-                                while(x<s.width){
-                                    let h;
-                                    let w;
-                                    for(let i = x;i<s.width; i++){
-                                        let p = s.getPixel(i, 2);
-                                        if(p.r === 255 && p.g === 0 && p.b === 0 && p.alpha === 255){
-                                            w = i-x;
+                                let maxHeight = 0;
+
+                                while(y<s.height){
+                                    maxHeight = 0;
+                                    while(x<s.width){
+                                        let h;
+                                        let w;
+                                        for(let i = x;i<s.width; i++){
+                                            let p = s.getPixel(i, y);
+                                            if(p.r === 255 && p.g === 0 && p.b === 0 && p.alpha === 255){
+                                                w = (i - x)-2;
+                                                break;
+                                            }
+                                        }
+                                        if(w === undefined ){
                                             break;
                                         }
-                                    }
-                                    if(w === undefined ){
-                                        x = s.width;
-                                        break;
-                                    }
-                                    for(let k = y; k<s.height; k++){
-                                        let p = s.getPixel(x+w-1, k);
-                                        if(p.r === 255 && p.g === 0 && p.b === 0 && p.alpha === 255){
-                                            h = k - y+1;
+                                        for(let k = y; k<s.height; k++){
+                                            let p = s.getPixel((x+w), k);
+                                            if(p.r === 255 && p.g === 0 && p.b === 0 && p.alpha === 255){
+                                                h = (k - y)-2;
+                                                break;
+                                            }
+                                        }
+
+                                        if(h === undefined){
                                             break;
                                         }
-                                    }
 
-                                    if(h === undefined){
-                                        x = s.width;
+                                        let c = document.createElement("canvas");
+                                        c.width = w;
+                                        c.height = h;
+                                        let ctx = c.getContext('2d');
+                                        maxHeight = Math.max(maxHeight, h);
+                                        ctx.drawImage(i, x+1, y+1, w, h, 0, 0, w, h);
+                                        imgs.push({name:"Image "+(imgs.length+1), dataUrl:c.toDataURL()});
+                                        x += w+4;
+                                    }
+                                    if(maxHeight === 0){
                                         break;
                                     }
-
-                                    let c = document.createElement("canvas");
-                                    c.width = w;
-                                    c.height = h;
-                                    let ctx = c.getContext('2d');
-                                    console.log(x, y, w, h);
-                                    ctx.drawImage(i, 0, 0, w, h, -x, -y, w, h);
-                                    imgs.push({name:"Image "+(imgs.length+1), dataUrl:c.toDataURL()});
-                                    document.querySelector("#out").appendChild(c);
-                                    x += w+4;
-                                    y = 2;
+                                    x = 2;
+                                    y += maxHeight+4;
                                 }
-
+                                s.domElement.parentNode.removeChild(s.domElement);
                                 pResolve(imgs);
 
                             }else{
+                                s.domElement.parentNode.removeChild(s.domElement);
                                 pReject();
                             }
                         });
@@ -184,7 +191,7 @@
                     pLoaded.y += maxHeight;
                     maxHeight = 0;
                     y = pLoaded.y;
-                    x = pLoaded.dimensions.width;
+                    x = 1 + pLoaded.dimensions.width;
                 }else{
                     x += pLoaded.dimensions.width;
                     maxHeight = Math.max(pLoaded.dimensions.height, maxHeight);
