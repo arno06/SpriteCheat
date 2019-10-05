@@ -1,26 +1,34 @@
 <html>
     <head>
         <title>SpriteCheat - CSS Sprite generator</title>
+        <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
         <link href="assets/style.css" rel="stylesheet">
         <script src="//dependencies.arnaud-nicolas.fr/?need=Stage,M4Tween"></script>
-        <script src="app/main.js"></script>
+        <script src="scripts/main.js"></script>
     </head>
     <body>
         <div id="canvas">
-            <div id="out"></div>
+
         </div>
         <div id="side">
             <div class="actions">
-                <button id="file_selector">Charger</button>
-                <button id="download">Enregistrer</button>
+                <button id="file_selector"><span class="icon-upload" title="Load Images"></span></button>
+                <button id="download" title="Download sprite"><span class="icon-download"></span></button>
                 <input type="file" multiple="multiple" id="files" accept="image/*" style="display:none">
             </div>
+            <div class="setup">
+                <h3><span class="icon-cog"></span>Setup</h3>
+                <div>
+                    <p><label for="canvas_width">Width: </label><input id="canvas_width" type="number" value="800"></p>
+                    <p><label for="canvas_height">Height: </label><input id="canvas_height" type="number" value="600"></p>
+                </div>
+            </div>
             <div class="infos">
-                <h3>Informations</h3>
+                <h3><span class="icon-info"></span>Informations</h3>
                 <div></div>
             </div>
             <div class="images">
-                <h3>Images</h3>
+                <h3><span class="icon-images"></span>Images</h3>
                 <div>
                     <ul></ul>
                 </div>

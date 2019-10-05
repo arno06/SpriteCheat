@@ -1,16 +1,24 @@
 (function(){
 
-    var stage;
-    var images;
-    var highlight;
+    let stage;
+    let images;
+    let highlight;
 
     function init(){
         document.querySelector('#files').addEventListener('change', fileSelectedHandler, false);
         document.querySelector('#download').addEventListener('click', downloadSpriteHandler, false);
+        document.querySelector('#canvas_width').addEventListener('change', refreshStageHandler, false);
+        document.querySelector('#canvas_height').addEventListener('change', refreshStageHandler, false);
         document.querySelector('#file_selector').addEventListener('click', function(e){
             document.querySelector('#files').click();
         }, false);
         stage = new Stage(800, 600, "#canvas");
+    }
+
+    function refreshStageHandler(){
+        stage.domElement.width = document.querySelector("#canvas_width").value;
+        stage.domElement.height = document.querySelector("#canvas_height").value;
+        render();
     }
 
     function downloadSpriteHandler(e){
@@ -28,9 +36,9 @@
     }
 
     function fileSelectedHandler(e){
-        var files = e.currentTarget.files;
+        let files = e.currentTarget.files;
 
-        var ul = document.querySelector('.images ul');
+        let ul = document.querySelector('.images ul');
 
         if(!files.length){
             return;
@@ -175,21 +183,21 @@
     function render(){
         images = [];
         stage.removeChildren();
-        var imgs = document.querySelectorAll('.images ul li img');
-        var current = 0;
-        var max = imgs.length;
+        let imgs = document.querySelectorAll('.images ul li img');
+        let current = 0;
+        let max = imgs.length;
 
-        var x = 1;
-        var y = 1;
+        let x = 1;
+        let y = 1;
 
-        var maxHeight = 0;
+        let maxHeight = 0;
 
         function next(pLoaded){
             if(pLoaded){
-                if(pLoaded.x + pLoaded.dimensions.width > 800){
+                if(pLoaded.x + pLoaded.dimensions.width > stage.domElement.width){
                     pLoaded.x = 1;
                     pLoaded.y += maxHeight;
-                    maxHeight = 0;
+                    maxHeight = pLoaded.dimensions.height;
                     y = pLoaded.y;
                     x = 1 + pLoaded.dimensions.width;
                 }else{
