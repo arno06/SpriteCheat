@@ -13,8 +13,12 @@ Todo
 ---
  * [x] Bouton de téléchargement du sprite en cours
  * [x] Mode edition à partir d'un sprite généré
+ * [x] Possibilité de déplacer le canvas
+ * [x] Possibilité de zoomer/dézoomer le canvas
  * [ ] Meilleur organisation des images
  * [ ] Drag & drop des images
  * [ ] Blocage/Déblocage des images
  * [ ] Suppression d'une image
- * [ ] Gestion des propriétés du sprite (dimensions, couleur de fond)
+ * [x] Ajout d'une image
+ * [x] Gestion des dimensions du sprite
+ * [ ] Gestion de la couleur de fond du sprite

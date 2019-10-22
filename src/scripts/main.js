@@ -4,6 +4,44 @@
     let images;
     let highlight;
 
+    let mode = 'default';
+
+    let modes = {
+        'default':{
+            'key':86,
+            'title':'Default mode (v)',
+            'icon':'icon-mouse-pointer',
+            'start':function(){},
+            'stop':function(){},
+        },
+        'hand':{
+            'key':72,
+            'title':'Hand mode (h)',
+            'icon':'icon-hand-paper-o',
+            'start':function(){
+                stage.domElement.addEventListener("mousedown", startDragHandler, false);
+            },
+            'stop':function(){
+                stage.domElement.removeEventListener("mousedown", startDragHandler, false);
+                endDragHandler(null);
+            }
+        },
+        'zoom':{
+            'key':90,
+            'title':'Zoom mode (z)',
+            'icon':'icon-search',
+            'val':1,
+            'start':function(){
+                stage.domElement.addEventListener('click', zoomHandler);
+                document.addEventListener('contextmenu', zoomHandler);
+            },
+            'stop':function(){
+                stage.domElement.removeEventListener('click', zoomHandler);
+                document.removeEventListener('contextmenu', zoomHandler);
+            }
+        }
+    };
+
     function init(){
         document.querySelector('#files').addEventListener('change', fileSelectedHandler, false);
         document.querySelector('#download').addEventListener('click', downloadSpriteHandler, false);
@@ -13,6 +51,98 @@
             document.querySelector('#files').click();
         }, false);
         stage = new Stage(800, 600, "#canvas");
+        setupModes();
+    }
+
+    function setupModes(){
+        for(var i in modes){
+            if(!modes.hasOwnProperty(i)){
+                continue;
+            }
+            let mode = modes[i];
+            let a = document.createElement('a');
+            a.setAttribute("data-mode", i);
+            a.setAttribute("title", mode.title);
+            if(i === "default"){
+                a.classList.add("activated");
+            }
+            let s = document.createElement('span');
+            s.classList.add(mode.icon);
+            a.appendChild(s);
+            document.querySelector('#modes').appendChild(a);
+            a.addEventListener("click", function(e){
+                e.preventDefault();
+                let m = e.currentTarget.getAttribute("data-mode");
+                changeMode(m);
+            });
+        }
+        window.addEventListener("keyup", function(e){
+            for(var i in modes){
+                if(!modes.hasOwnProperty(i)){
+                    continue;
+                }
+                let mode = modes[i];
+                if(e.keyCode === mode.key){
+                    changeMode(i);
+                }
+            }
+        });
+    }
+
+    function changeMode(pMode){
+        if(!modes[pMode]){
+            console.log("Unsupported mode yet "+m);
+            return;
+        }
+        if(mode&&modes[mode]){
+            modes[mode].stop();
+        }
+        document.querySelectorAll("#modes a").forEach(function(pItem){
+            if(pItem.getAttribute("data-mode") === pMode){
+                pItem.classList.add("activated");
+            }
+            else{
+                pItem.classList.remove("activated");
+            }
+        });
+        stage.domElement.classList.remove(mode);
+        mode = pMode;
+        stage.domElement.classList.add(mode);
+        modes[mode].start();
+    }
+
+    function zoomHandler(e){
+        e.preventDefault();
+        if(e.button===2){
+            modes.zoom.val -= .1;
+        }else{
+            modes.zoom.val += .1;
+        }
+        stage.domElement.style.transform = 'scale('+modes.zoom.val+', '+modes.zoom.val+')';
+    }
+
+    function startDragHandler(e){
+        document.addEventListener('mousemove', dragHandler, false);
+        document.addEventListener('mouseup', endDragHandler, true);
+        document.addEventListener('mouseout', endDragHandler, true);
+        stage.domElement.setAttribute("data-x", e.screenX);
+        stage.domElement.setAttribute("data-y", e.screenY);
+        var s = stage.domElement.currentStyle||window.getComputedStyle(stage.domElement);
+        stage.domElement.setAttribute("data-start-x", s.marginLeft.replace("px", ""));
+        stage.domElement.setAttribute("data-start-y", s.marginTop.replace("px", ""));
+    }
+
+    function dragHandler(e){
+        var diffX = Number(stage.domElement.getAttribute("data-x")) - e.screenX;
+        var diffY = Number(stage.domElement.getAttribute("data-y")) - e.screenY;
+        stage.domElement.style.marginLeft = (Number(stage.domElement.getAttribute("data-start-x"))-diffX)+"px";
+        stage.domElement.style.marginTop = (Number(stage.domElement.getAttribute("data-start-y"))-diffY)+"px";
+    }
+
+    function endDragHandler(e){
+        document.removeEventListener('mousemove', dragHandler);
+        document.removeEventListener('mouseup', endDragHandler, true);
+        document.removeEventListener('mouseout', endDragHandler, true);
     }
 
     function refreshStageHandler(){
@@ -28,8 +158,7 @@
         setTimeout(function(){
             var link = document.createElement('a');
             link.download = 'spritecheat.png';
-            link.setAttribute("href", stage.domElement.toDataURL("image/png")
-                .replace("image/png", "image/octet-stream"));
+            link.setAttribute("href", stage.domElement.toDataURL("image/png").replace("image/png", "image/octet-stream"));
             link.click();
         }, 150);
 
@@ -59,7 +188,6 @@
                 li.appendChild(document.createTextNode(pImage.name));
                 ul.appendChild(li);
             });
-            console.log("ok");
             render();
         }, function(){
             console.log("nop");
@@ -85,10 +213,10 @@
         }
     }
 
-    function parseAndReadImages(pFiles){
+    function parseAndReadImages(pFiles, pForceSoloImg = false){
         return new Promise(function(pResolve, pReject){
             let max = pFiles.length;
-            if(max>1){
+            if(max>1||pForceSoloImg){
                 let loaded = 0;
                 let images = [];
                 pFiles.forEach(function(pFile, pIndex){
@@ -166,10 +294,9 @@
                                 }
                                 s.domElement.parentNode.removeChild(s.domElement);
                                 pResolve(imgs);
-
                             }else{
                                 s.domElement.parentNode.removeChild(s.domElement);
-                                pReject();
+                                parseAndReadImages(pFiles, true).then(pResolve, pReject);
                             }
                         });
                     };
