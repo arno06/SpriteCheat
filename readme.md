@@ -16,7 +16,7 @@ Todo
  * [x] Possibilité de déplacer le canvas
  * [x] Possibilité de zoomer/dézoomer le canvas
  * [ ] Meilleur organisation des images
- * [ ] Drag & drop des images
+ * [x] Drag & drop des images
  * [ ] Blocage/Déblocage des images
  * [ ] Suppression d'une image
  * [x] Ajout d'une image

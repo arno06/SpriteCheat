@@ -6,12 +6,12 @@ body{display:flex;background:#000;}
 
 body #canvas{background:#f1f1f1;flex-grow:1;flex-shrink:1;position:relative;overflow:hidden;}
 
-body #canvas canvas{z-index:1;display:block;background:url("imgs/canvas.png") repeat;position:absolute;top:50%;left:50%;margin-top:-300px;margin-left:-400px;}
-body #canvas canvas.default{}
-body #canvas canvas.hand{cursor: grab;}
-body #canvas canvas.zoom{cursor: zoom-in;}
-
-body #canvas #modes{background:#353535;width:28px;position:absolute;z-index:2;}
+body #canvas .container{z-index:1;display:block;background:url("imgs/canvas.png") repeat;position:absolute;top:50%;left:50%;margin-top:-300px;margin-left:-400px;}
+body #canvas .container canvas.default{}
+body #canvas .container canvas.hand{cursor: grab;}
+body #canvas .container canvas.zoom{cursor: zoom-in;}
+body #canvas .container #highlight{border:solid 2px #ffff00;position:absolute;pointer-events: none;}
+body #canvas #modes{background:#353535;width:28px;position:absolute;z-index:3;}
 body #canvas #modes a{display:block;padding:6px;width:16px;height:16px;color:#b7b7b7;text-decoration: none;text-align: center;}
 body #canvas #modes a.activated, body #canvas #modes a:hover{background:#666;color:#d7d7d7;}
 

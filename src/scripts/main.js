@@ -50,12 +50,25 @@
         document.querySelector('#file_selector').addEventListener('click', function(e){
             document.querySelector('#files').click();
         }, false);
-        stage = new Stage(800, 600, "#canvas");
+        stage = new Stage(800, 600, "#canvas .container");
         setupModes();
+        document.querySelector(".images>div").addEventListener("dragover", function(e){
+            e.preventDefault();
+        });
+        document.querySelector(".images>div").addEventListener("drop", function(e){
+            e.preventDefault();
+            let files = [];
+            for (let i = 0; i < e.dataTransfer.items.length; i++) {
+                if (e.dataTransfer.items[i].kind === 'file') {
+                    files.push(e.dataTransfer.items[i].getAsFile());
+                }
+            }
+            fileSelectedHandler({currentTarget:{files:files}});
+        });
     }
 
     function setupModes(){
-        for(var i in modes){
+        for(let i in modes){
             if(!modes.hasOwnProperty(i)){
                 continue;
             }
@@ -77,7 +90,7 @@
             });
         }
         window.addEventListener("keyup", function(e){
-            for(var i in modes){
+            for(let i in modes){
                 if(!modes.hasOwnProperty(i)){
                     continue;
                 }
@@ -118,25 +131,25 @@
         }else{
             modes.zoom.val += .1;
         }
-        stage.domElement.style.transform = 'scale('+modes.zoom.val+', '+modes.zoom.val+')';
+        stage.domElement.parentNode.style.transform = 'scale('+modes.zoom.val+', '+modes.zoom.val+')';
     }
 
     function startDragHandler(e){
         document.addEventListener('mousemove', dragHandler, false);
         document.addEventListener('mouseup', endDragHandler, true);
         document.addEventListener('mouseout', endDragHandler, true);
-        stage.domElement.setAttribute("data-x", e.screenX);
-        stage.domElement.setAttribute("data-y", e.screenY);
-        var s = stage.domElement.currentStyle||window.getComputedStyle(stage.domElement);
-        stage.domElement.setAttribute("data-start-x", s.marginLeft.replace("px", ""));
-        stage.domElement.setAttribute("data-start-y", s.marginTop.replace("px", ""));
+        stage.domElement.parentNode.setAttribute("data-x", e.screenX);
+        stage.domElement.parentNode.setAttribute("data-y", e.screenY);
+        let s = stage.domElement.parentNode.currentStyle||window.getComputedStyle(stage.domElement.parentNode);
+        stage.domElement.parentNode.setAttribute("data-start-x", s.marginLeft.replace("px", ""));
+        stage.domElement.parentNode.setAttribute("data-start-y", s.marginTop.replace("px", ""));
     }
 
     function dragHandler(e){
-        var diffX = Number(stage.domElement.getAttribute("data-x")) - e.screenX;
-        var diffY = Number(stage.domElement.getAttribute("data-y")) - e.screenY;
-        stage.domElement.style.marginLeft = (Number(stage.domElement.getAttribute("data-start-x"))-diffX)+"px";
-        stage.domElement.style.marginTop = (Number(stage.domElement.getAttribute("data-start-y"))-diffY)+"px";
+        let diffX = Number(stage.domElement.parentNode.getAttribute("data-x")) - e.screenX;
+        let diffY = Number(stage.domElement.parentNode.getAttribute("data-y")) - e.screenY;
+        stage.domElement.parentNode.style.marginLeft = (Number(stage.domElement.parentNode.getAttribute("data-start-x"))-diffX)+"px";
+        stage.domElement.parentNode.style.marginTop = (Number(stage.domElement.parentNode.getAttribute("data-start-y"))-diffY)+"px";
     }
 
     function endDragHandler(e){
@@ -153,10 +166,10 @@
 
     function downloadSpriteHandler(e){
         e.preventDefault();
-        highlight.hide();
+        Highlight.hide();
 
         setTimeout(function(){
-            var link = document.createElement('a');
+            let link = document.createElement('a');
             link.download = 'spritecheat.png';
             link.setAttribute("href", stage.domElement.toDataURL("image/png").replace("image/png", "image/octet-stream"));
             link.click();
@@ -197,16 +210,16 @@
     function liClickedHandler(e){
         e.currentTarget.parentNode.querySelectorAll('.selected').forEach(function(pItem){if(e.currentTarget===pItem){return;}pItem.classList.remove('selected');});
         e.currentTarget.classList.toggle('selected');
-        var idx = Number(e.currentTarget.getAttribute("data-index"));
-        for(var i = 0, max = images.length; i<max; i++){
-            var el = images[i];
+        let idx = Number(e.currentTarget.getAttribute("data-index"));
+        for(let i = 0, max = images.length; i<max; i++){
+            let el = images[i];
             if(i===idx){
-                var info = "";
+                let info = "";
                 if(e.currentTarget.classList.contains('selected')){
-                    highlight.show(el);
+                    Highlight.show(el);
                     info = '<p>width:'+el.image.width+'px;</p><p>height:'+el.image.height+'px;</p><p>background-position:-'+(el.x+2)+'px -'+(el.y+2)+'px;</p>';
                 }else{
-                    highlight.hide();
+                    Highlight.hide();
                 }
                 document.querySelector('#side .infos div').innerHTML = info;
             }
@@ -333,11 +346,9 @@
                 }
             }
             if(current===max){
-                highlight = new Highlight();
-                stage.addChild(highlight);
                 return;
             }
-            var element = new SpriteElement(imgs[current++].getAttribute("src"), next);
+            let element = new SpriteElement(imgs[current++].getAttribute("src"), next);
             element.x = x;
             element.y = y;
             images.push(element);
@@ -346,28 +357,27 @@
         next();
     }
 
-    function Highlight(){
-        this.reset();
-        this._width = 0;
-        this._height = 0;
-    }
+    function Highlight(){}
 
-    Class.define(Highlight, [Sprite], {
-        _draw:function(){
-            this.clear();
-            this.setLineStyle(2, "rgb(255, 255, 0)");
-            this.drawRect(0, 0, this._width, this._height);
-        },
-        show:function(el){
-            M4Tween.killTweensOf(this);
-            M4Tween.to(this, .2, {useStyle:false, x:el.x, y:el.y, _width:el.image.width+4, _height:el.image.height+4}).onUpdate(
-                this._draw.proxy(this)
-            ).onComplete(this._draw.proxy(this));
-        },
-        hide:function(){
-            this.clear();
+    Highlight.getElement = function(){
+        let hl = document.querySelector("#highlight");
+        if(!hl){
+            hl = document.createElement("div");
+            hl.setAttribute("id", "highlight");
+            document.querySelector("#canvas .container").appendChild(hl);
         }
-    });
+        return hl;
+    };
+
+    Highlight.show = function(pEl){
+        let hl = Highlight.getElement();
+        M4Tween.killTweensOf(hl);
+        M4Tween.to(hl, .2, {left:(pEl.x-1)+"px", top:(pEl.y-1)+"px", width:(pEl.image.width+2)+"px", height:(pEl.image.height+2)+"px", opacity:1});
+    };
+
+    Highlight.hide = function(){
+        Highlight.getElement().style.opacity = 0;
+    };
 
     function SpriteElement(pSrc, pOnLoaded){
         this.selected = false;
