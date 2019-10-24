@@ -15,10 +15,10 @@ Todo
  * [x] Mode edition à partir d'un sprite généré
  * [x] Possibilité de déplacer le canvas
  * [x] Possibilité de zoomer/dézoomer le canvas
- * [ ] Meilleur organisation des images
  * [x] Drag & drop des images
- * [ ] Blocage/Déblocage des images
- * [ ] Suppression d'une image
+ * [x] Blocage/Déblocage des images
+ * [x] Suppression d'une image
  * [x] Ajout d'une image
  * [x] Gestion des dimensions du sprite
  * [ ] Gestion de la couleur de fond du sprite
+ * [ ] Meilleur organisation des images

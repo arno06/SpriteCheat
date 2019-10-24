@@ -4,13 +4,18 @@
         <title>SpriteCheat - CSS Sprite generator</title>
         <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
         <link href="assets/style.css" rel="stylesheet">
-        <script src="//dependencies.arnaud-nicolas.fr/?need=Stage,M4Tween"></script>
+        <script src="//dependencies.arnaud-nicolas.fr/?need=Stage,M4Tween,ColorPicker"></script>
         <script src="scripts/main.js"></script>
     </head>
     <body>
         <div id="canvas">
             <div id="modes"></div>
             <div class="container"></div>
+            <div id="zoom">
+                <span class="icon-zoom-out" data-button="2"></span>
+                <span class="label">100%</span>
+                <span class="icon-zoom-in" data-button="1"></span>
+            </div>
         </div>
         <div id="side">
             <div class="actions">
@@ -21,8 +26,14 @@
             <div class="setup">
                 <h3><span class="icon-cog"></span>Setup</h3>
                 <div>
-                    <p><label for="canvas_width">Width: </label><input id="canvas_width" type="number" value="800"></p>
-                    <p><label for="canvas_height">Height: </label><input id="canvas_height" type="number" value="600"></p>
+                    <div class="dimensions">
+                        <p><label for="canvas_width">Width: </label><input id="canvas_width" type="number" value="800"></p>
+                        <p><label for="canvas_height">Height: </label><input id="canvas_height" type="number" value="600"></p>
+                    </div>
+                    <div class="other">
+                        <p><label for="canvas_transparency">Transparent : </label><input type="checkbox" id="canvas_transparency" checked/></p>
+                        <p><label for="canvas_color">Color : </label><span id="canvas_color"></span></p>
+                    </div>
                 </div>
             </div>
             <div class="infos">

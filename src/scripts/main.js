@@ -1,6 +1,7 @@
 (function(){
 
     let stage;
+    let picker;
     let images;
     let highlight;
 
@@ -51,7 +52,32 @@
             document.querySelector('#files').click();
         }, false);
         stage = new Stage(800, 600, "#canvas .container");
+        picker = new ColorPicker(320, 300, document.querySelector("#canvas_color"));
+        picker.icon.addEventListener("click", togglePickerHandler);
+        togglePickerHandler();
         setupModes();
+        setupDragDropFiles();
+    }
+
+    function togglePickerHandler(e){
+        let canvas = picker.stage.domElement;
+        let selector = picker.selector;
+        let cursor = picker.cursor;
+        canvas.style.display = selector.style.display = cursor.style.display = canvas.style.display === "none" ? "block":"none";
+        if(canvas.style.display === "block"){
+            document.addEventListener("click", hidePicker, true);
+        }
+    }
+
+    function hidePicker(e){
+        if(e.target === picker.stage.domElement){
+            return;
+        }
+        togglePickerHandler();
+        document.removeEventListener("click", hidePicker, true);
+    }
+
+    function setupDragDropFiles(){
         document.querySelector(".images>div").addEventListener("dragover", function(e){
             e.preventDefault();
         });
@@ -97,8 +123,29 @@
                 let mode = modes[i];
                 if(e.keyCode === mode.key){
                     changeMode(i);
+                    return;
                 }
             }
+            if([46, 83].indexOf(e.keyCode)>-1){
+                var selected = document.querySelector('.selected');
+                if(!selected){
+                    return;
+                }
+                if(selected.querySelector('.icon-lock')){
+                    alert("The selection is locked.");
+                    return;
+                }
+                Highlight.hide();
+                selected.parentNode.removeChild(selected);
+                render();
+            }
+        });
+
+        document.querySelectorAll("#canvas #zoom .icon-zoom-in, #canvas #zoom .icon-zoom-out").forEach(function(pItem){
+            pItem.addEventListener("click", function(e){
+                e.preventDefault();
+                zoomHandler({preventDefault:function(){}, button:Number(e.currentTarget.getAttribute("data-button"))});
+            });
         });
     }
 
@@ -127,11 +174,15 @@
     function zoomHandler(e){
         e.preventDefault();
         if(e.button===2){
+            if(modes.zoom.val <= .2){
+                return;
+            }
             modes.zoom.val -= .1;
         }else{
             modes.zoom.val += .1;
         }
         stage.domElement.parentNode.style.transform = 'scale('+modes.zoom.val+', '+modes.zoom.val+')';
+        document.querySelector("#canvas #zoom .label").innerHTML = (Math.round(100*modes.zoom.val))+"%";
     }
 
     function startDragHandler(e){
@@ -199,12 +250,40 @@
                 span.appendChild(preview);
                 preview.src = pImage.dataUrl;
                 li.appendChild(document.createTextNode(pImage.name));
+                let lock = document.createElement("span");
+                lock.classList.add("icon-unlocked");
+                lock.addEventListener("click", imgLockHandler, true);
+                li.appendChild(lock);
                 ul.appendChild(li);
             });
             render();
         }, function(){
             console.log("nop");
         });
+    }
+
+    function imgLockHandler(e){
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+
+        let isLocked = e.currentTarget.classList.contains("icon-lock");
+        if(isLocked){
+            e.currentTarget.classList.replace("icon-lock", "icon-unlocked");
+        }else{
+            e.currentTarget.classList.replace("icon-unlocked", "icon-lock");
+        }
+
+        let li = e.currentTarget.parentNode;
+        let idx = Number(e.currentTarget.parentNode.getAttribute("data-index"));
+        for(let i = 0, max = images.length; i<max; i++) {
+            let el = images[i];
+            if(i===idx){
+                el.locked = isLocked;
+                li.setAttribute('data-x', el.x);
+                li.setAttribute('data-y', el.y);
+            }
+        }
     }
 
     function liClickedHandler(e){
@@ -348,9 +427,20 @@
             if(current===max){
                 return;
             }
-            let element = new SpriteElement(imgs[current++].getAttribute("src"), next);
-            element.x = x;
-            element.y = y;
+            let img = imgs[current++];
+            let li = img.parentNode.parentNode;
+            let element = new SpriteElement(img.getAttribute("src"), next);
+            let isLocked = li.querySelector("span:last-of-type").classList.contains("icon-lock");
+            if(!isLocked){
+                element.x = x;
+                element.y = y;
+            }else{
+                element.x = Number(li.getAttribute("data-x"));
+                element.y = Number(li.getAttribute("data-y"));
+                element.locked = true;
+                x = element.x;
+                y = element.y;
+            }
             images.push(element);
             stage.addChild(element);
         }
@@ -382,6 +472,7 @@
     function SpriteElement(pSrc, pOnLoaded){
         this.selected = false;
         this.reset();
+        this.locked = false;
         this.onLoaded = pOnLoaded||function(){};
         this.image = new Image();
         this.image.addEventListener("load", this.imageLoadedHandler.proxy(this), false);
