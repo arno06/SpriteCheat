@@ -10,6 +10,7 @@ body #canvas .container{z-index:1;display:block;background:url("imgs/canvas.png"
 body #canvas .container canvas.default{}
 body #canvas .container canvas.hand{cursor: grab;}
 body #canvas .container canvas.zoom{cursor: zoom-in;}
+body #canvas .container canvas.zoom.out{cursor: zoom-out;}
 body #canvas .container #highlight{border:solid 2px #ffff00;position:absolute;pointer-events: none;}
 body #canvas #modes{background:#353535;width:28px;position:absolute;z-index:3;}
 body #canvas #modes a{display:block;padding:6px;width:16px;height:16px;color:#b7b7b7;text-decoration: none;text-align: center;}
@@ -33,10 +34,11 @@ body #side>div>div>div>p>input{border:none;outline:none;}
 body #side>div input#canvas_width{width:50px;}
 body #side>div input#canvas_height{width:50px;}
 body #side>div.setup #canvas_color{position:relative;}
-body #side>div.setup #canvas_color canvas{position:absolute;top:100%;right:0;}
+body #side>div.setup #canvas_color canvas{position:absolute;top:100%;right:0;z-index:10;}
 
-body #side>div.actions{flex-grow:0;flex-shrink:0;height:60px;color:#b7b7b7;text-align: right;}
-body #side>div.actions button{padding:10px;border:none;background:#fafafa;cursor:pointer;border-bottom:3px solid #a8a8a8;border-radius:3px;}
+body #side>div.actions{flex-grow:0;flex-shrink:0;height:60px;color:#b7b7b7;text-align: center;}
+body #side>div.actions button{margin-top:8px;padding:10px;border:none;background:#fafafa;cursor:pointer;border-bottom:3px solid #a8a8a8;border-radius:3px;}
+body #side>div.actions button span{display:inline-block;margin-right:5px;}
 body #side>div.infos{flex-grow:0;flex-shrink:0;height:100px;color:#b7b7b7;}
 body #side>div.infos>div{padding:5px;font-size:0.8em;}
 body #side>div.setup{height:80px;flex-grow:0;flex-shrink:0;}

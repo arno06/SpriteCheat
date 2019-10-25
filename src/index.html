@@ -19,8 +19,8 @@
         </div>
         <div id="side">
             <div class="actions">
-                <button id="file_selector"><span class="icon-upload" title="Load Images"></span></button>
-                <button id="download" title="Download sprite"><span class="icon-download"></span></button>
+                <button id="file_selector" title="Image(s) or a previous sprite"><span class="icon-upload" title="Load Images"></span>Load</button>
+                <button id="download" title="Download PNG file"><span class="icon-download"></span>Download</button>
                 <input type="file" multiple="multiple" id="files" accept="image/*" style="display:none">
             </div>
             <div class="setup">
@@ -32,7 +32,7 @@
                     </div>
                     <div class="other">
                         <p><label for="canvas_transparency">Transparent : </label><input type="checkbox" id="canvas_transparency" checked/></p>
-                        <p><label for="canvas_color">Color : </label><span id="canvas_color"></span></p>
+                        <p style="display: none;"><label for="canvas_color">Color : </label><span id="canvas_color"></span></p>
                     </div>
                 </div>
             </div>

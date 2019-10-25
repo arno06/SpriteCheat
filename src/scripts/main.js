@@ -3,7 +3,6 @@
     let stage;
     let picker;
     let images;
-    let highlight;
 
     let mode = 'default';
 
@@ -20,11 +19,32 @@
             'title':'Hand mode (h)',
             'icon':'icon-hand-paper-o',
             'start':function(){
-                stage.domElement.addEventListener("mousedown", startDragHandler, false);
+                stage.domElement.addEventListener("mousedown", modes.hand.startDragHandler, false);
             },
             'stop':function(){
-                stage.domElement.removeEventListener("mousedown", startDragHandler, false);
-                endDragHandler(null);
+                stage.domElement.removeEventListener("mousedown", modes.hand.startDragHandler, false);
+                modes.hand.endDragHandler(null);
+            },
+            'startDragHandler':function(e){
+                document.addEventListener('mousemove', modes.hand.dragHandler, false);
+                document.addEventListener('mouseup', modes.hand.endDragHandler, true);
+                document.addEventListener('mouseout', modes.hand.endDragHandler, true);
+                stage.domElement.parentNode.setAttribute("data-x", e.screenX);
+                stage.domElement.parentNode.setAttribute("data-y", e.screenY);
+                let s = stage.domElement.parentNode.currentStyle||window.getComputedStyle(stage.domElement.parentNode);
+                stage.domElement.parentNode.setAttribute("data-start-x", s.marginLeft.replace("px", ""));
+                stage.domElement.parentNode.setAttribute("data-start-y", s.marginTop.replace("px", ""));
+            },
+            'dragHandler':function(e){
+                let diffX = Number(stage.domElement.parentNode.getAttribute("data-x")) - e.screenX;
+                let diffY = Number(stage.domElement.parentNode.getAttribute("data-y")) - e.screenY;
+                stage.domElement.parentNode.style.marginLeft = (Number(stage.domElement.parentNode.getAttribute("data-start-x"))-diffX)+"px";
+                stage.domElement.parentNode.style.marginTop = (Number(stage.domElement.parentNode.getAttribute("data-start-y"))-diffY)+"px";
+            },
+            'endDragHandler':function(e){
+                document.removeEventListener('mousemove', modes.hand.dragHandler);
+                document.removeEventListener('mouseup', modes.hand.endDragHandler, true);
+                document.removeEventListener('mouseout', modes.hand.endDragHandler, true);
             }
         },
         'zoom':{
@@ -33,12 +53,41 @@
             'icon':'icon-search',
             'val':1,
             'start':function(){
-                stage.domElement.addEventListener('click', zoomHandler);
-                document.addEventListener('contextmenu', zoomHandler);
+                stage.domElement.addEventListener('click', modes.zoom.handler);
+                document.addEventListener('contextmenu', modes.zoom.handler);
+                window.addEventListener('keydown', modes.zoom.keyDownHandler);
+                window.addEventListener('keyup', modes.zoom.keyUpHandler);
             },
             'stop':function(){
-                stage.domElement.removeEventListener('click', zoomHandler);
-                document.removeEventListener('contextmenu', zoomHandler);
+                stage.domElement.removeEventListener('click', modes.zoom.handler);
+                document.removeEventListener('contextmenu', modes.zoom.handler);
+                window.removeEventListener('keydown', modes.zoom.keyDownHandler);
+                window.removeEventListener('keyup', modes.zoom.keyUpHandler);
+            },
+            'handler':function(e){
+                e.preventDefault();
+                if(e.button===2||e.altKey){
+                    if(modes.zoom.val <= .2){
+                        return;
+                    }
+                    modes.zoom.val -= .1;
+                }else{
+                    modes.zoom.val += .1;
+                }
+                stage.domElement.parentNode.style.transform = 'scale('+modes.zoom.val+', '+modes.zoom.val+')';
+                document.querySelector("#canvas #zoom .label").innerHTML = (Math.round(100*modes.zoom.val))+"%";
+            },
+            'keyUpHandler':function(e){
+                if(e.keyCode===18){//alt
+                    e.preventDefault();
+                    document.querySelector("body #canvas .container canvas.zoom").classList.remove("out");
+                }
+            },
+            'keyDownHandler':function(e){
+                if(e.altKey){
+                    e.preventDefault();
+                    document.querySelector("body #canvas .container canvas.zoom").classList.add("out");
+                }
             }
         }
     };
@@ -48,12 +97,14 @@
         document.querySelector('#download').addEventListener('click', downloadSpriteHandler, false);
         document.querySelector('#canvas_width').addEventListener('change', refreshStageHandler, false);
         document.querySelector('#canvas_height').addEventListener('change', refreshStageHandler, false);
+        document.querySelector('#canvas_transparency').addEventListener('click', transparencyHandler, false);
         document.querySelector('#file_selector').addEventListener('click', function(e){
             document.querySelector('#files').click();
         }, false);
         stage = new Stage(800, 600, "#canvas .container");
         picker = new ColorPicker(320, 300, document.querySelector("#canvas_color"));
         picker.icon.addEventListener("click", togglePickerHandler);
+        picker.addEventListener(ColorPickerEvent.COLOR_PICKED, refreshStageHandler);
         togglePickerHandler();
         setupModes();
         setupDragDropFiles();
@@ -136,7 +187,11 @@
                     return;
                 }
                 Highlight.hide();
-                selected.parentNode.removeChild(selected);
+                let ul = selected.parentNode;
+                ul.removeChild(selected);
+                ul.querySelectorAll("li").forEach(function(pLi, pIndex){
+                    pLi.setAttribute("data-index", pIndex);
+                });
                 render();
             }
         });
@@ -144,7 +199,7 @@
         document.querySelectorAll("#canvas #zoom .icon-zoom-in, #canvas #zoom .icon-zoom-out").forEach(function(pItem){
             pItem.addEventListener("click", function(e){
                 e.preventDefault();
-                zoomHandler({preventDefault:function(){}, button:Number(e.currentTarget.getAttribute("data-button"))});
+                modes.zoom.handler({preventDefault:function(){}, button:Number(e.currentTarget.getAttribute("data-button"))});
             });
         });
     }
@@ -171,42 +226,9 @@
         modes[mode].start();
     }
 
-    function zoomHandler(e){
-        e.preventDefault();
-        if(e.button===2){
-            if(modes.zoom.val <= .2){
-                return;
-            }
-            modes.zoom.val -= .1;
-        }else{
-            modes.zoom.val += .1;
-        }
-        stage.domElement.parentNode.style.transform = 'scale('+modes.zoom.val+', '+modes.zoom.val+')';
-        document.querySelector("#canvas #zoom .label").innerHTML = (Math.round(100*modes.zoom.val))+"%";
-    }
-
-    function startDragHandler(e){
-        document.addEventListener('mousemove', dragHandler, false);
-        document.addEventListener('mouseup', endDragHandler, true);
-        document.addEventListener('mouseout', endDragHandler, true);
-        stage.domElement.parentNode.setAttribute("data-x", e.screenX);
-        stage.domElement.parentNode.setAttribute("data-y", e.screenY);
-        let s = stage.domElement.parentNode.currentStyle||window.getComputedStyle(stage.domElement.parentNode);
-        stage.domElement.parentNode.setAttribute("data-start-x", s.marginLeft.replace("px", ""));
-        stage.domElement.parentNode.setAttribute("data-start-y", s.marginTop.replace("px", ""));
-    }
-
-    function dragHandler(e){
-        let diffX = Number(stage.domElement.parentNode.getAttribute("data-x")) - e.screenX;
-        let diffY = Number(stage.domElement.parentNode.getAttribute("data-y")) - e.screenY;
-        stage.domElement.parentNode.style.marginLeft = (Number(stage.domElement.parentNode.getAttribute("data-start-x"))-diffX)+"px";
-        stage.domElement.parentNode.style.marginTop = (Number(stage.domElement.parentNode.getAttribute("data-start-y"))-diffY)+"px";
-    }
-
-    function endDragHandler(e){
-        document.removeEventListener('mousemove', dragHandler);
-        document.removeEventListener('mouseup', endDragHandler, true);
-        document.removeEventListener('mouseout', endDragHandler, true);
+    function transparencyHandler(e){
+        document.querySelector("#canvas_color").parentNode.style.display = e.currentTarget.checked?"none":"flex";
+        refreshStageHandler();
     }
 
     function refreshStageHandler(){
@@ -311,7 +333,7 @@
             if(max>1||pForceSoloImg){
                 let loaded = 0;
                 let images = [];
-                pFiles.forEach(function(pFile, pIndex){
+                pFiles.forEach(function(pFile){
                     let reader = new FileReader();
                     reader.onload = function(e){
                         images.push({name:pFile.name, dataUrl:e.target.result});
@@ -401,6 +423,7 @@
 
     function render(){
         images = [];
+        stage.clear();
         stage.removeChildren();
         let imgs = document.querySelectorAll('.images ul li img');
         let current = 0;
@@ -445,6 +468,12 @@
             stage.addChild(element);
         }
         next();
+
+        if(!document.querySelector('#canvas_transparency').checked){
+            stage.beginFill(picker.icon.style.backgroundColor);
+            stage.drawRect(0, 0, stage.domElement.width, stage.domElement.height);
+            stage.endFill();
+        }
     }
 
     function Highlight(){}

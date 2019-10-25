@@ -7,6 +7,7 @@ Dependencies
 ---
  * [Stage](https://github.com/arno06/Stage)
  * [M4Tween](https://github.com/arno06/M4Tween)
+ * [ColorPicker](https://github.com/arno06/Stage/blob/master/src/StageColorPicker.js)
 
 
 Todo
@@ -20,5 +21,5 @@ Todo
  * [x] Suppression d'une image
  * [x] Ajout d'une image
  * [x] Gestion des dimensions du sprite
- * [ ] Gestion de la couleur de fond du sprite
+ * [x] Gestion de la couleur de fond du sprite
  * [ ] Meilleur organisation des images
